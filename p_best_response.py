@@ -1,12 +1,41 @@
 #!/usr/bin/python3
+## Compute the best response under p regression for a single agent
 
 import numpy as np
 from p_regression import loss_fn_p, fit_model, get_ith_projection, get_H_matrix
 
-eps = 0.0001
+
+def to_update(X, curr_Y, true_Y, i, p):
+    """ Compute whether an agent needs to update their value or not. Helps with early termination
+        Very similar to verify_equilibrium
+        TODO: Make verify equilibrium leverage this"""
+    
+    eps = 0.005
+    proj = np.matmul(X, fit_model(X, curr_Y, p=p))
+    n = X.shape[0]
+
+    def in_range(x, y, eps=eps):
+        """ Check if x - eps < y < x+eps """
+        if x-eps <= y <= x+eps:
+            return True
+        return False
+        
+    if in_range(curr_Y[i], 0) and (proj[i]-eps > true_Y[i] or proj[i] + eps > true_Y[i]):
+        return False
+    elif in_range(curr_Y[i], 1) and (proj[i]-eps < true_Y[i] or proj[i] + eps < true_Y[i]):
+        return False
+    elif not in_range(curr_Y[i], 1) and not in_range(curr_Y[i], 0) and in_range(proj[i], true_Y[i]):
+        return False
+    else:
+        return True
 
 def lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, p):
-    """ Compute the best response for agent i, using a smart form of binary searching """
+    """ Compute the best response for agent i, using a form of binary searching
+        0 means no update from the agent
+        1 means an update from the agent
+        TODO: clean up some of the cases
+    """
+    eps = 0.0001
     def binary_search(min_val, max_val, true_val):
         mid = min_val + ((max_val - min_val) / 2)
         mid_report = curr_Y.copy()
@@ -21,48 +50,78 @@ def lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, p):
         else:                       # Need to go lower
             return binary_search(mid, max_val, true_val)
     
-    
+    if to_update(X, curr_Y, true_Y, i, p) == False:
+        return 0, curr_Y[i]
+
     curr_report = curr_Y[i]
+    old_report = curr_report
     curr_val = get_ith_projection(X, curr_beta, i)
     true_val = true_Y[i]
 
+    # possibly redundant
     if abs(curr_val - true_val) < eps:
-        return curr_report
+        return 0, curr_report
         
     report = curr_Y.copy() 
-    if curr_val > true_val:     # pull down
-        #print("Pull Down")
+    if curr_val > true_val:     # pull down the hyperplane
         report[i] = 0
         beta_zero = fit_model(X, report, p=p)
         val = get_ith_projection(X, beta_zero, i)
         if val > true_val:
-            return 0
+            if old_report == 0:
+                return 0, 0
+            else:
+                return 1, 0
         else:
-            return binary_search(0, curr_report, true_val)
-    
-    elif curr_val < true_val:     # pull up
+            ret = binary_search(0, curr_report, true_val)
+            if old_report == ret:
+                return 0, ret
+            else:
+                return 1, ret
+            
+    elif curr_val < true_val:     # pull up the hyperplane
         #print("Pull Up")
         report[i] = 1
         beta_one = fit_model(X, report, p=p)
         val = get_ith_projection(X, beta_one, i)
         if val < true_val:
-            return 1
+            if old_report == 1:
+                return 0, 1
+            else:
+                return 1, 1
         else:
-            return binary_search(curr_report, 1, true_val)
+            ret = binary_search(curr_report, 1, true_val)
+            if old_report == ret:
+                return 0, ret
+            else:
+                return 1, ret
     else:
         assert False, "should not be here"
 
 def l2_agent_best_response(H, curr_Y, true_Y, i):
+    """ The best response for an agent under 2-norm.
+        Note bar{y} = H*tilde(y), where H is the projection matrix
+        Pretty simple, but a bit obsfucated as I wrote it in vectorized
+        form for efficient
+    """
+    
+    eps = 0.0001
     curr_weight = H[i,i]
+    curr_val = curr_Y[i]
     n = H.shape[0]
     total = 0
 
     ith_row = H[i,:].copy()
     ith_row[i] = 0
     br = np.clip((true_Y[i] - np.dot(ith_row, curr_Y)) / curr_weight, 0, 1)
-    return br
+   
+    if (br - curr_val) < eps:
+        return 0, br
+    else:
+        return 1, br
 
 def test_best_response():
+    eps = 0.005
     #### Test 1 - with p=2 and d=1 ####
     X = np.array([[0,1], [0.25, 1], [0.75, 1], [1,1]])
     true_Y = np.array([0, 0.4, 0.6, 1])
@@ -72,8 +131,8 @@ def test_best_response():
     
     # testing best response
     for i in range(4):
-        br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
-        br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
+        _, br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
+        _, br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
         assert abs(br_approx - br_true) < eps, "TEST: agent best response 1 - FAILED"
     print("TEST: agent best response 1 - PASSED")
 
@@ -86,8 +145,8 @@ def test_best_response():
     
     # testing best response
     for i in range(4):
-        br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
-        br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
+        _, br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
+        _, br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
         assert abs(br_approx - br_true) < eps, "TEST: agent best response 2 - FAILED"
     print("TEST: agent best response 2 - PASSED")
 
@@ -100,8 +159,8 @@ def test_best_response():
     
     # testing best response
     for i in range(4):
-        br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
-        br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
+        _, br_true = l2_agent_best_response(H_mat, curr_Y, true_Y, i)
+        _, br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, i, 2)
         assert abs(br_approx - br_true) < eps, "TEST: agent best response 3 - FAILED"
     print("TEST: agent best response 3 - PASSED")
 
@@ -109,7 +168,7 @@ def test_best_response():
     X, true_Y = generate_data(d=3)
     curr_Y = true_Y.copy()
     curr_beta = fit_model(X, true_Y, p=4)
-    br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, 1, 4)
+    _, br_approx = lp_agent_best_response(X, curr_Y, true_Y, curr_beta, 1, 4)
     
     curr_Y[1] = br_approx
     br_utl = abs(true_Y[1] - get_ith_projection(X, fit_model(X, curr_Y, p=4), 1))
@@ -120,7 +179,6 @@ def test_best_response():
         test_utl = abs(true_Y[1] - get_ith_projection(X, fit_model(X, test_Y, p=4), 1))
         assert test_utl > br_utl, "TEST: agent best response 3 - FAILED"
     print("TEST: agent best response 3 - PASSED")
-
 
 if __name__ == "__main__":
     test_best_response()

@@ -6,7 +6,7 @@ SIMS = 1000
 XDIM = 1
 P = 2
 NO PARALLELIZATION    - 92.816
-WITH PARELLELIZATION  - 35.94
+WITH PARELLELIZATION  - 36.94
 
 
 
@@ -21,6 +21,7 @@ NO PARALLELIZATION    - 522.54
 WITH PARELLELIZATION  - 303.64
 
 
+
 ========================================================================================
 SWEEP P BENCHMARKS
 ========================================================================================
@@ -28,6 +29,6 @@ P = [1.2,3,5]
 SIMS = 100
 XDIM = 1
 P = 2
-NO PARALLELIZATION    -         (~32s/iteration for p=1.2, 15.18s/it for p=3, 22s/it for p=5, )
-WITH PARELLELIZATION  - 
+NO PARALLELIZATION    - 8986.9        (~32s/iteration for p=1.2, 15.18s/it for p=3, 22s/it for p=5, )
+WITH PARELLELIZATION  - 2159.6 
  

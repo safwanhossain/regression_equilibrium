@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# Generate data for simulations and code to fit the regression lines for a given p
 
 import cvxpy as cp
 import numpy as np
@@ -7,6 +8,7 @@ import scipy.optimize
 import statsmodels.api as sm
 
 def l1_regression_scipy(X, Y):
+    """ L1 regression using scipy - unstable"""
     def fit(X, beta):
         return np.dot(X, beta)
 
@@ -20,28 +22,63 @@ def l1_regression_scipy(X, Y):
     return beta_l1
 
 def l1_regression(X, Y):
+    """ L1 regression using stats packagage - stable and use this"""
     import warnings
     warnings.filterwarnings("ignore")
     results = sm.QuantReg(Y, X).fit(q=0.5)
     return results.params
 
 def loss_fn_p(X, Y, beta, p_):
+    """ Lp loss function - used for cxvpy to compute the optimal regression params"""
     return cp.pnorm(cp.matmul(X, beta) - Y, p=p_)**p_
 
-def generate_data(d=1, n=4, sigma=0.5):
+def generate_data_naive(d=1, n=4, sigma=0.5):
     """ d is the dimension of the x point
         n is the number of points
         sigma is the standard deviation
+        
+        Need to ensure all points have y vals in [0,1], but don't wanna clip too much
+        SUFFERS FROM ~40% CLIPPING
+        VERY BAD AND DON'T USE
     """
     X = np.random.randn(n, d+1);
     X[:,-1] = np.ones(n)
 
     mean = np.random.uniform(0,1,1)[0]
     true_Y = np.random.normal(mean, sigma, n)
+    before = true_Y
     true_Y = np.clip(true_Y, 0, 1)
     return X, true_Y
+                
+def generate_data(d=1, n=4, sigma=0.5):
+    """ d is the dimension of the x point
+        n is the number of points
+        sigma is the standard deviation
+
+        Generate the X values according to Gaussian distribution centered at 0
+        Generate the beta values according to uniform distribution [0,1]
+        Get the corresponding projections and then add noise
+        Then normalize (not clip!!) to ensure values are between 0 and 1
+        USE THIS - VERY GOOD
+    """
+    X = sigma*np.random.randn(n, d);
+    X = np.concatenate([X, np.ones((n,1))], axis=1)
+    
+    beta_vec = np.concatenate([np.random.uniform(-1,1,d), np.random.uniform(-1,1,1)])
+    noise_vec = (sigma/2)*np.random.randn(n)
+    true_Y = np.matmul(X, beta_vec) + noise_vec
+
+    # normalize
+    true_Y = true_Y + abs(min(0, min(true_Y)))
+    true_Y = true_Y / max(1.0, max(true_Y))
+
+    # safety (but never really needed)
+    clip_Y = np.clip(true_Y, 0, 1) 
+    return X, clip_Y
 
 def fit_model(X, Y, p=2, test=False):
+    """ Find the optimal regression paramter for the input and a choice of p
+    for p != 2, use convex optimization lib - otherwise, use standard least squares"""
     def fit_model_2(X, Y):
         beta_mse = np.linalg.lstsq(X, Y, rcond=None)[0]
         return beta_mse
@@ -60,11 +97,15 @@ def fit_model(X, Y, p=2, test=False):
 
 def get_H_matrix(X):
     """ Get the projection matrix for L2 regression """
-    H_mat = np.matmul(X, np.matmul(np.linalg.inv(np.matmul(X.transpose(), X)), \
-            X.transpose()))
-    return H_mat
+    if X.shape[0] == X.shape[1] - 1:
+        return np.eye(X.shape[0])
+    else:
+        H_mat = np.matmul(X, np.matmul(np.linalg.inv(np.matmul(X.transpose(), X)), \
+                X.transpose()))
+        return H_mat
 
 def get_ith_projection(X, beta, i):
+    """ Get the ith element of the projection vector"""
     y_bar = np.matmul(X, beta)
     return y_bar[i]
 
@@ -117,12 +158,24 @@ def test():
      
     beta_1 = fit_model(X, true_Y, p=1)
     y_bar_p = np.matmul(X, beta_1)
-    print(y_bar_p)
     true_Y_bar = [0, 0.25, 0.75, 1]
     delta = np.sum(np.power(true_Y_bar - y_bar_p, 2))
     assert delta < eps, "TEST: p regression fitting 4 - FAILED"
     print("TEST: p regression fitting 4 - PASSED")
 
-
+    #### Test 5 - L2 regression where d=n ####
+    X, Y = generate_data(d=5, n=5, sigma=0.5)
+    beta = fit_model(X, Y, p=1.2)
+    y_fit = np.matmul(X, beta)
+    delta = np.sum(np.power(y_fit - Y, 2))
+    assert delta < eps, "TEST: p regression fitting 5 - FAILED"
+    print("TEST: p regression fitting 5 - PASSED")
+    
 if __name__ == "__main__":
     test()
+
+
+
+
+
+

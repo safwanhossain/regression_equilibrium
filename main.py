@@ -1,3 +1,5 @@
+# DEPRECATED AND NOT MAINTAINED - see main_parallel.py for latest version
+
 import numpy as np
 from best_response_algo import best_response_algo
 from p_regression import generate_data, fit_model
