@@ -4,9 +4,8 @@ import numpy as np
 from best_response_algo import best_response_algo
 from p_regression import generate_data, fit_model
 from plot_from_csv import plot
-import matplotlib.pyplot as plt
 import csv
-from tqdm import tqdm 
+#from tqdm import tqdm 
 
 import time
 import concurrent.futures 
@@ -17,7 +16,7 @@ N = 100
 NUM_SIMS = 1000
 ALPHA = 1
 XDIM = 5
-NUM_CORES = 12
+NUM_CORES = 25
 
 def run_simulation(tup):
     "Find the nash equilbrium for the given input and get the necessary stats"""
@@ -141,6 +140,7 @@ def sweep_p(p_vals, with_l1=False, to_plot=True):
         
         csv_writer.writerow([str(p_), str(avg_br), str(var_br), \
                 str(avg_sc), str(var_sc), str(avg_sc_l1), str(var_sc_l1)])
+        csv_file.flush()
 
         br_iters.append(avg_br)
         social_cost.append(avg_sc)
@@ -197,6 +197,7 @@ def sweep_d(d_vals, with_l1=False, to_plot=True):
         
         csv_writer.writerow([str(d_), str(avg_br), str(var_br), \
                 str(avg_sc), str(var_sc), str(avg_sc_l1), str(var_sc_l1)])
+        csv_file.flush()
 
         br_iters.append(avg_br)
         social_cost.append(avg_sc)
@@ -235,15 +236,15 @@ def benchmark_p():
     print(end-start)
 
 if __name__ == "__main__":
-    n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 11000, 1000)])
-    sweep_n(n_vals, with_l1=True)
+    #n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 11000, 1000)])
+    #sweep_n(n_vals, with_l1=True)
 
-    d_vals = np.arange(1, 20, 2)
-    sweep_d(d_vals, with_l1=True)
+    #d_vals = np.arange(1, 20, 2)
+    #sweep_d(d_vals, with_l1=True)
     
-    #p_vals = [1.2, 1.4, 1.6, 1.8, 2, 4, 6, 8, 10, 100]
-    #sweep_p(p_vals, with_l1=True)
-   
+    p_vals = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    sweep_p(p_vals, with_l1=True, to_plot=False)
+    #benchmark_n()
 
 
 

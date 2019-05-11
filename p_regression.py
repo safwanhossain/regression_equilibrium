@@ -3,7 +3,6 @@
 
 import cvxpy as cp
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.optimize
 import statsmodels.api as sm
 
