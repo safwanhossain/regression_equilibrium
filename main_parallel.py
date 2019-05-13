@@ -15,7 +15,7 @@ N = 100
 NUM_SIMS = 1000
 ALPHA = 1
 XDIM = 5
-NUM_CORES = 12
+NUM_CORES = 25
 
 def run_simulation(tup):
     "Find the nash equilbrium for the given input and get the necessary stats"""
@@ -34,7 +34,7 @@ def run_simulation(tup):
     else:
         MSE_l1 = 1
 
-    equi_exists, counter, iters, equi_report, beta_equi = best_response_algo(X, true_Y, p, alpha=a)
+    equi_exists, counter, iters, equi_report, beta_equi = best_response_algo(X, true_Y, p, test=True, alpha=a)
     social_cost, social_cost_l1, br_iters = 1, 1, 1
     if equi_exists:
         proj = np.matmul(X, beta_equi)
@@ -88,6 +88,7 @@ def sweep_n(n_vals, with_l1=False, to_plot=True):
         
         csv_writer.writerow([str(n_), str(avg_br), str(var_br), \
                 str(avg_sc), str(var_sc), str(avg_sc_l1), str(var_sc_l1)])
+        csv_file.flush()
 
         br_iters.append(avg_br)
         social_cost.append(avg_sc)
@@ -266,17 +267,17 @@ def sweep_alpha(a_vals, with_l1=False, to_plot=True):
         br_iters_var.append(var_br)
         social_cost_var.append(var_sc)
         social_cost_l1_var.append(var_sc_l1)
-    
+        
     if to_plot:
         if with_l1 == True:
-            plot(a_vals, "X dimension", "sweep_d", br_iters, social_cost, social_cost_l1)
+            plot(a_vals, "% of agents playing", "sweep_alpha", br_iters, social_cost, social_cost_l1)
         else:
-            plot(a_vals, "X dimension", "sweep_d", br_iters, social_cost)
+            plot(a_vals, "% of agents playing", "sweep_alpha", br_iters, social_cost)
 
 def benchmark_n():
     print("Benchmarking n")
     start = time.time()
-    sweep_n([10, 20, 30, 40], with_l1=True, to_plot=True)
+    sweep_n([10, 100, 300], with_l1=True, to_plot=True)
     end = time.time()
     print(end-start)
 
@@ -297,16 +298,17 @@ def benchmark_p():
 def benchmark_alpha():
     print("Benchmarking alpha")
     start = time.time()
-    sweep_alpha([0.1, 0.2], with_l1=True, to_plot=False)
+    sweep_alpha([0.5, 1.0], with_l1=True, to_plot=False)
     end = time.time()
     print(end-start)
 
 if __name__ == "__main__":
-    #n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 11000, 1000)])
-    #n_vals = [4000, 5000, 6000]
+    #n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 6000, 1000)])
+    #print(n_vals)
     #sweep_n(n_vals, with_l1=True, to_plot=False)
 
     #d_vals = np.arange(1, 20, 2)
+    #print(d_vals)
     #sweep_d(d_vals, with_l1=True)
     
     #p_vals = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -316,6 +318,5 @@ if __name__ == "__main__":
     a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     sweep_alpha(a_vals, with_l1=True, to_plot=False)
     
-    #benchmark_alpha()
-
+    #benchmark_n()
 
