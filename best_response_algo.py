@@ -10,7 +10,7 @@ MAX_COUNT = 2000
 """ Different eps values are needed in different functions primarily due to the sensitivity
  of the algorithm to certain pathological inputs and high number of agents"""
 
-def best_response_algo(X, true_Y, p, test=False):
+def best_response_algo(X, true_Y, p, test=False, alpha=None):
     """ If p == 2, we will be using the analytic best response algorithm
         Otherwise, we will be going for an approximate best response 
         
@@ -18,9 +18,12 @@ def best_response_algo(X, true_Y, p, test=False):
         to their best response. When a round arises, wherein the agents don't update
         (within some eps) then we have reached an approximate equilibrium.
         """
-    
     n = X.shape[0] 
     eps = 0.0001
+    
+    agents = np.array([i for i in range(n)])
+    if alpha != None:
+        agents = np.random.choice(agents, int(len(agents)*alpha), replace=False)
     
     yLast = np.ones(n)
     yNew = true_Y.copy()
@@ -34,7 +37,7 @@ def best_response_algo(X, true_Y, p, test=False):
         yLast = yNew.copy()
         curr_beta = fit_model(X, yNew, p=p)
         
-        for j in range(n):
+        for j in agents:
             if p == 2 and test == False:
                 update, br = l2_agent_best_response(H_mat, yNew, true_Y, j)
             else:
@@ -48,12 +51,12 @@ def best_response_algo(X, true_Y, p, test=False):
     if curr_beta[0] == -1:
         curr_beta = fit_model(X, equi_report, p=p)
     
-    if np.linalg.norm(yLast - equi_report) <= eps and verify_equilibrium(X, equi_report, true_Y, p):
+    if np.linalg.norm(yLast - equi_report) <= eps and verify_equilibrium(X, equi_report, true_Y, p, agents):
         return (True, counter, br_iters, equi_report, curr_beta)
     else:
         return (False, counter, br_iters, equi_report, curr_beta)
 
-def verify_equilibrium(X, equi_Y, true_Y, p):
+def verify_equilibrium(X, equi_Y, true_Y, p, agents=None):
     """ Verify if this is an equilibrium. The idea (mentioned in the paper) is: at equilbrium, the
     agent either reports 0 and the line passes above his preferred point, reports 1 and it passes
     below his preferred point, or reports something in (0,1) and the line goes right through
@@ -69,7 +72,7 @@ def verify_equilibrium(X, equi_Y, true_Y, p):
             return True
         return False
     
-    for i in range(n):
+    for i in agents:
         if in_range(equi_Y[i], 0) and (proj[i]-eps > true_Y[i] or proj[i] + eps > true_Y[i]):
             continue
         elif in_range(equi_Y[i], 1) and (proj[i]-eps < true_Y[i] or proj[i] + eps < true_Y[i]):

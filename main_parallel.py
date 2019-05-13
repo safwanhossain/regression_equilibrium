@@ -5,7 +5,6 @@ from best_response_algo import best_response_algo
 from p_regression import generate_data, fit_model
 from plot_from_csv import plot
 import csv
-#from tqdm import tqdm 
 
 import time
 import concurrent.futures 
@@ -16,12 +15,16 @@ N = 100
 NUM_SIMS = 1000
 ALPHA = 1
 XDIM = 5
-NUM_CORES = 25
+NUM_CORES = 12
 
 def run_simulation(tup):
     "Find the nash equilbrium for the given input and get the necessary stats"""
+    a = None
+    if len(tup) == 5:
+        X, true_Y, n_, with_l1, p = tup
+    if len(tup) == 6:
+        X, true_Y, n_, with_l1, p, a = tup
 
-    X, true_Y, n_, with_l1, p = tup
     proj_Y = np.matmul(X, fit_model(X, true_Y))
     MSE_h = np.sum(np.power(proj_Y - true_Y, 2))
 
@@ -31,7 +34,7 @@ def run_simulation(tup):
     else:
         MSE_l1 = 1
 
-    equi_exists, counter, iters, equi_report, beta_equi = best_response_algo(X, true_Y, p)
+    equi_exists, counter, iters, equi_report, beta_equi = best_response_algo(X, true_Y, p, alpha=a)
     social_cost, social_cost_l1, br_iters = 1, 1, 1
     if equi_exists:
         proj = np.matmul(X, beta_equi)
@@ -214,6 +217,62 @@ def sweep_d(d_vals, with_l1=False, to_plot=True):
         else:
             plot(d_vals, "X dimension", "sweep_d", br_iters, social_cost)
 
+def sweep_alpha(a_vals, with_l1=False, to_plot=True):
+    """ Sweep the dimension of the X, and run NUM_SIMS number fo simulations for each values
+    Parallelize the simulations across multiple processes
+    compute the best response iterations, social cost of equi and social cost of L1"""
+    
+    csv_file = open("sweep_alpha.csv", mode='w')
+    csv_writer = csv.writer(csv_file, delimiter=',')
+    social_cost, social_cost_l1, br_iters, equi_found = [], [], [], []
+    social_cost_var, social_cost_l1_var, br_iters_var = [], [], []
+
+    for a_ in a_vals:
+        social_cost_, social_cost_l1_, br_iters_ = [], [], []
+        print("a = ", a_)
+        
+        inputs = []
+        for i in range(NUM_SIMS):
+            X, true_Y = generate_data(d=XDIM, n=N)
+            tup = (X, true_Y, N, with_l1, P, a_)
+            inputs.append(tup)
+            
+        executor = concurrent.futures.ProcessPoolExecutor(NUM_CORES)
+        futures = [executor.submit(run_simulation, item) for item in inputs]
+        concurrent.futures.wait(futures)
+
+        for future in futures:
+            assert(future.done())
+            tup = future.result()
+            br_time, sc, sc_l1 = tup
+            br_iters_.append(br_time)
+            social_cost_.append(sc)
+            social_cost_l1_.append(sc_l1)
+
+        br_iters_, social_cost_, social_cost_l1_ = np.array(br_iters_), np.array(social_cost_), np.array(social_cost_l1_)
+        avg_br, var_br = np.mean(br_iters_), np.sqrt(np.var(br_iters_))
+        avg_sc, var_sc = np.mean(social_cost_), np.sqrt(np.var(social_cost_))
+        avg_sc_l1, var_sc_l1 = np.mean(social_cost_l1_), np.sqrt(np.var(social_cost_l1_))
+        
+        csv_writer.writerow([str(a_), str(avg_br), str(var_br), \
+                str(avg_sc), str(var_sc), str(avg_sc_l1), str(var_sc_l1)])
+        csv_file.flush()
+
+        br_iters.append(avg_br)
+        social_cost.append(avg_sc)
+        social_cost_l1.append(avg_sc_l1)
+        equi_found.append( len(social_cost_) / NUM_SIMS )
+
+        br_iters_var.append(var_br)
+        social_cost_var.append(var_sc)
+        social_cost_l1_var.append(var_sc_l1)
+    
+    if to_plot:
+        if with_l1 == True:
+            plot(a_vals, "X dimension", "sweep_d", br_iters, social_cost, social_cost_l1)
+        else:
+            plot(a_vals, "X dimension", "sweep_d", br_iters, social_cost)
+
 def benchmark_n():
     print("Benchmarking n")
     start = time.time()
@@ -235,16 +294,28 @@ def benchmark_p():
     end = time.time()
     print(end-start)
 
+def benchmark_alpha():
+    print("Benchmarking alpha")
+    start = time.time()
+    sweep_alpha([0.1, 0.2], with_l1=True, to_plot=False)
+    end = time.time()
+    print(end-start)
+
 if __name__ == "__main__":
     #n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 11000, 1000)])
-    #sweep_n(n_vals, with_l1=True)
+    #n_vals = [4000, 5000, 6000]
+    #sweep_n(n_vals, with_l1=True, to_plot=False)
 
     #d_vals = np.arange(1, 20, 2)
     #sweep_d(d_vals, with_l1=True)
     
-    p_vals = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    sweep_p(p_vals, with_l1=True, to_plot=False)
+    #p_vals = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    #sweep_p(p_vals, with_l1=True, to_plot=False)
     #benchmark_n()
 
+    a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    sweep_alpha(a_vals, with_l1=True, to_plot=False)
+    
+    #benchmark_alpha()
 
 

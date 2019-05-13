@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import csv
 import sys
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 def plot(x_vals, xlabel, name, br_time_vals, sc_vals, sc_l1_vals=None, log=False):
     """ Plot the best response, iterations, social cost of equilibrium regression
