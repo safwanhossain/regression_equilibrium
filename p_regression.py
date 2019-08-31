@@ -5,6 +5,9 @@ import cvxpy as cp
 import numpy as np
 import scipy.optimize
 import statsmodels.api as sm
+from constants import MIN_Y, MAX_Y
+#MIN_Y = 0
+#MAX_Y = 1
 
 def l1_regression_scipy(X, Y):
     """ L1 regression using scipy - unstable"""
@@ -68,11 +71,11 @@ def generate_data(d=1, n=4, sigma=0.5):
     true_Y = np.matmul(X, beta_vec) + noise_vec
 
     # normalize
-    true_Y = true_Y + abs(min(0, min(true_Y)))
-    true_Y = true_Y / max(1.0, max(true_Y))
+    true_Y = true_Y + abs(min(MIN_Y, min(true_Y)))
+    true_Y = true_Y / max(MAX_Y, max(true_Y))
 
     # safety (but never really needed)
-    clip_Y = np.clip(true_Y, 0, 1) 
+    clip_Y = np.clip(true_Y, MIN_Y, MAX_Y) 
     return X, clip_Y
 
 def fit_model(X, Y, p=2, test=False):
@@ -92,7 +95,8 @@ def fit_model(X, Y, p=2, test=False):
         beta = cp.Variable(d)
         problem = cp.Problem(cp.Minimize(loss_fn(X, Y, beta, p)))
         problem.solve()
-        return beta.value
+        beta = np.array(beta.value) 
+        return beta
 
 def get_H_matrix(X):
     """ Get the projection matrix for L2 regression """
@@ -171,7 +175,13 @@ def test():
     print("TEST: p regression fitting 5 - PASSED")
     
 if __name__ == "__main__":
-    test()
+    X = np.array([[0,1], [1, 1], [4,1]])
+    true_Y = np.array([0, 1, 1])
+     
+    beta_1 = fit_model(X, true_Y, p=1)
+    y_bar_p = np.matmul(X, beta_1)
+    print(y_bar_p)
+    #test()
 
 
 
