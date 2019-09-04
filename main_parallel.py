@@ -294,7 +294,7 @@ if __name__ == "__main__":
     #d_vals = np.concatenate([np.arange(1, 20, 2), np.arange(25, 35, 5), np.arange(30,100,10)])
     #sweep_d(d_vals, with_l1=True)
     
-    p_vals = [1.4]
+    p_vals = [1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10]
     sweep_p(p_vals, with_l1=True)
 
     #a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
