@@ -28,6 +28,9 @@ To run experiments (synthetic):
 
 To plot curves
   For PPoA using q=2 and with BR curve and L1 (figures 1a, 1b, 1c, 2a in experiments)
+  
     ./plot_from_csv <csv_file> <plot_name (image will be saved under this name)> <log scale x (T/F)> 
+    
   For PPoA using different q values and no BR curve or L1 (figures 4 in appendix)
+
     ./plot_from_csv <csv_file> <plot_name (image will be saved under this name)> <log scale x (T/F)> false true
