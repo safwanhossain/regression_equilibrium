@@ -21,3 +21,13 @@ cost (in GT literature called price of anarchy) of the equilibrium solution. Tha
 reporting honestly. We want to see these quatities as a function of N (number of agent), P, and XDIM (the dimension of the x values). We
 sweep each parameter and use default values for the rest. Each datapoint is the average of a 1000 simulations. The code is parallelized 
 so that the simulations can run on multiple concurrent processes.
+
+To run experiments (synthetic):
+  Go to main_parallel and chose which experiments to run 
+  python3 main_parallel 
+
+To plot curves
+  For PPoA using q=2 and with BR curve and L1 (figures 1a, 1b, 1c, 2a in experiments)
+    ./plot_from_csv <csv_file> <plot_name (image will be saved under this name)> <log scale x (T/F)> 
+  For PPoA using different q values and no BR curve or L1 (figures 4 in appendix)
+    ./plot_from_csv <csv_file> <plot_name (image will be saved under this name)> <log scale x (T/F)> false true
