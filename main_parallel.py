@@ -5,7 +5,7 @@ from best_response_algo import best_response_algo
 from p_regression import generate_data, fit_model
 #from plot_from_csv import plot
 import csv
-from constants import P, N, NUM_SIMS, ALPHA, XDIM, NUM_CORES, ERROR_P
+from constants import P, N, NUM_SIMS, ALPHA, XDIM, NUM_CORES, ERROR_P, NORMALIZE
 
 import time
 import concurrent.futures 
@@ -18,9 +18,9 @@ def run_simulation(tup):
     if len(tup) == 6:
         X, true_Y, n_, with_l1, p, a = tup
 
-    proj_Y = np.matmul(X, fit_model(X, true_Y))
-    errors_honest = [np.sum(np.power(np.abs(proj_Y - true_Y), k)) for k in ERROR_P]
-    
+    proj_Y = [np.matmul(X, fit_model(X, true_Y,p=k)) for k in ERROR_P]
+    errors_honest = [np.sum(np.power(np.abs(proj_Y[j] - true_Y), k)) for j, k in enumerate(ERROR_P)]
+
     if with_l1:
         proj_Y_l1 = np.matmul(X, fit_model(X, true_Y, p=1))
         errors_l1 = [np.sum(np.power(np.abs(proj_Y_l1 - true_Y), k)) for k in ERROR_P]
@@ -32,7 +32,7 @@ def run_simulation(tup):
     if equi_exists:
         proj = np.matmul(X, beta_equi)
         errors_equi = [np.sum(np.power(np.abs(proj - true_Y), k)) for k in ERROR_P]
-     
+
         if errors_equi[1] != 0 and errors_equi[1] != 0:
             social_cost = [errors_equi[k]/errors_honest[k] for k in range(len(ERROR_P))]
             social_cost_l1 = [errors_l1[k]/errors_honest[k] for k in range(len(ERROR_P))]
@@ -102,7 +102,7 @@ def sweep_p(p_vals, with_l1=False):
     Parallelize the simulations across multiple processes
     compute the best response iterations, social cost of equi and social cost of L1"""
     
-    csv_file = open("sweep_p.csv", mode='w')
+    csv_file = open("sweep_p_2.csv", mode='w')
     csv_writer = csv.writer(csv_file, delimiter=',')
     social_cost, social_cost_l1, br_iters, equi_found = np.ones((len(p_vals), len(ERROR_P))), np.ones((len(p_vals), len(ERROR_P))), [], []
     social_cost_var, social_cost_l1_var, br_iters_var = np.ones((len(p_vals), len(ERROR_P))), np.ones((len(p_vals), len(ERROR_P))), []
@@ -294,11 +294,11 @@ if __name__ == "__main__":
     #d_vals = np.concatenate([np.arange(1, 20, 2), np.arange(25, 35, 5), np.arange(30,100,10)])
     #sweep_d(d_vals, with_l1=True)
     
-    #p_vals = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    #sweep_p(p_vals, with_l1=True)
+    p_vals = [1.4]
+    sweep_p(p_vals, with_l1=True)
 
-    a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    sweep_alpha(a_vals, with_l1=True)
+    #a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    #sweep_alpha(a_vals, with_l1=True)
     
     #benchmark_n()
 
