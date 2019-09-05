@@ -23,8 +23,9 @@ sweep each parameter and use default values for the rest. Each datapoint is the 
 so that the simulations can run on multiple concurrent processes.
 
 To run experiments (synthetic):
-  Go to main_parallel and chose which experiments to run 
-  python3 main_parallel 
+  
+  ./main_parallel <n,p,d,a> 
+
 
 To plot curves
   For PPoA using q=2 and with BR curve and L1 (figures 1a, 1b, 1c, 2a in experiments)
