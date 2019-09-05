@@ -23,6 +23,7 @@ sweep each parameter and use default values for the rest. Each datapoint is the 
 so that the simulations can run on multiple concurrent processes. 
 
 Notes: SEE constants.py BEFORE RUNNING. Requirements: numpy, cvxpy, concurrent
+
 To run experiments (synthetic):
   
     ./main_parallel <n,p,d,a> 
