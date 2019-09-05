@@ -20,11 +20,16 @@ In our experiments, we want to see the number of best response updates necessary
 cost (in GT literature called price of anarchy) of the equilibrium solution. That is the ratio of the MSE of the equilbrium to the MSE of
 reporting honestly. We want to see these quatities as a function of N (number of agent), P, and XDIM (the dimension of the x values). We
 sweep each parameter and use default values for the rest. Each datapoint is the average of a 1000 simulations. The code is parallelized 
-so that the simulations can run on multiple concurrent processes.
+so that the simulations can run on multiple concurrent processes. 
 
+Notes: SEE constants.py BEFORE RUNNING. Requirements: numpy, cvxpy, concurrent
 To run experiments (synthetic):
   
-  ./main_parallel <n,p,d,a> 
+    ./main_parallel <n,p,d,a> 
+    
+To run experiments (real):
+  
+    ./main_real_data <california/taiwan> 
 
 
 To plot curves
