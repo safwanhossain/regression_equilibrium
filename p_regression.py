@@ -6,8 +6,7 @@ import numpy as np
 import scipy.optimize
 import statsmodels.api as sm
 from constants import MIN_Y, MAX_Y
-#MIN_Y = 0
-#MAX_Y = 1
+import csv
 
 def l1_regression_scipy(X, Y):
     """ L1 regression using scipy - unstable"""
@@ -77,6 +76,43 @@ def generate_data(d=1, n=4, sigma=0.5):
     # safety (but never really needed)
     clip_Y = np.clip(true_Y, MIN_Y, MAX_Y) 
     return X, clip_Y
+
+def generate_regression_matrix_taiwan(num_samples, dimension):
+    csv_file = open("taiwan_real_estate.csv", mode='r')
+    csv_reader = csv.reader(csv_file, delimiter=",")
+    
+    targets = np.array(np.ones(num_samples))
+    attributes = np.array(np.ones((num_samples, dimension+1)))
+
+    for i, row in enumerate(csv_reader):
+        if i >= num_samples:
+            break
+        
+        targets[i] = float(row[-1])
+        for j in range(1, len(row)-1):
+            attributes[i,j-1] = float(row[j])
+
+    return attributes, targets
+
+def generate_regression_matrix_california(num_samples, dimension):
+    csv_file = open("california_real_estate.csv", mode='r')
+    csv_reader = csv.reader(csv_file, delimiter=",")
+    
+    targets = np.array(np.ones(num_samples))
+    attributes = np.array(np.ones((num_samples, dimension+1)))
+    count = 0
+    for row in csv_reader:
+        if row[-1] != "NEAR BAY" or "" in row:
+            continue
+        
+        if count >= num_samples:
+            break
+        targets[count] = float(row[-2])/1000
+        for j in range(len(row)-2):
+            attributes[count,j-1] = float(row[j])
+        count += 1
+    return attributes, targets
+
 
 def fit_model(X, Y, p=2, test=False):
     """ Find the optimal regression paramter for the input and a choice of p

@@ -1,11 +1,9 @@
-# Sweep values for n, p, xdim and run simulations for them
-
+#!/usr/bin/python3
 import numpy as np
 from best_response_algo import best_response_algo
 from p_regression import generate_data, fit_model
-#from plot_from_csv import plot
-import csv
-from constants import P, N, NUM_SIMS, ALPHA, XDIM, NUM_CORES, ERROR_P, NORMALIZE
+import sys, csv
+from constants import P, N, NUM_SIMS, ALPHA, XDIM, NUM_CORES, ERROR_P, MAX_Y
 
 import time
 import concurrent.futures 
@@ -288,17 +286,24 @@ def benchmark_alpha():
     print(end-start)
 
 if __name__ == "__main__":
-    #n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 4000, 1000)])
-    #sweep_n(n_vals, with_l1=True)
+    """ To run, ./main_parallel <n,p,d,a> """
+    assert MAX_Y == 1, "See constants.py"
 
-    #d_vals = np.concatenate([np.arange(1, 20, 2), np.arange(25, 35, 5), np.arange(30,100,10)])
-    #sweep_d(d_vals, with_l1=True)
-    
-    p_vals = [1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10]
-    sweep_p(p_vals, with_l1=True)
-
-    #a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    #sweep_alpha(a_vals, with_l1=True)
+    exp = sys.argv[1].lower()
+    if exp == 'n':
+        n_vals = np.concatenate([np.arange(10,100,10), np.arange(100,1000,100), np.arange(1000, 4000, 1000)])
+        sweep_n(n_vals, with_l1=True)
+    elif exp == 'p':
+        p_vals = [1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10]
+        sweep_p(p_vals, with_l1=True)
+    elif exp == 'd':
+        d_vals = np.concatenate([np.arange(1, 20, 2), np.arange(25, 35, 5), np.arange(30,100,10)])
+        sweep_d(d_vals, with_l1=True)
+    elif exp == 'a':
+        a_vals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        sweep_alpha(a_vals, with_l1=True)
+    else:
+        print("Options are <n,p,d,a>")
     
     #benchmark_n()
 
