@@ -12,6 +12,6 @@ MIN_Y = 0
 MAX_Y = 1
 
 # For synthetic: [1.2, 1.7, 2, 3, 5]; for real data (california or taiwan): [2]
-ERROR_P = [1.2, 1.7, 2, 3, 5]
+ERROR_P = [2]
 
 LEN_ERROR_P = len(ERROR_P)

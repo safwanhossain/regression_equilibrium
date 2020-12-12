@@ -1,47 +1,49 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 import csv
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from constants import NUM_SIMS, ERROR_P, LEN_ERROR_P
 
-def plot(x_vals, xlabel, name, br_time_vals, br_vars, sc_vals, sc_vars, sc_l1_vals=None, sc_l1_vars=None, log=False):
+def plot(x_vals, xlabel, name, br_time_vals, br_vars, sc_vals, sc_vars, sc_l1_vals=None, sc_l1_vars=None, log=False, bw=True):
     """ Plot the best response, iterations, social cost of equilibrium regression
     and social cost of L1 regression - all in one plot"""
     fig, ax1 = plt.subplots()
-    color = 'tab:red'
+    color = 'red'
     #ax1.set_ylabel('BR Updates', color=color, fontsize=21)
     if log == True:
-        ax1.semilogx(x_vals, br_time_vals, color=color, linewidth=4)
-        ax1.fill_between(x_vals, br_time_vals-br_vars, br_time_vals+br_vars, color=color, alpha=0.35)
+        ax1.semilogx(x_vals, br_time_vals, color=color, linewidth=4, label="BR updates", linestyle='dashed')
+        ax1.fill_between(x_vals, br_time_vals-br_vars, br_time_vals+br_vars, color=color, alpha=0.25)
     else:
-        ax1.plot(x_vals, br_time_vals, color=color, linewidth=4)
-        ax1.fill_between(x_vals, br_time_vals-br_vars, br_time_vals+br_vars, color=color, alpha=0.35)
+        ax1.plot(x_vals, br_time_vals, color=color, linewidth=4, label="BR updates", linestyle='dashed')
+        ax1.fill_between(x_vals, br_time_vals-br_vars, br_time_vals+br_vars, color=color, alpha=0.25)
     ax1.tick_params(axis='x', labelsize=17)
     ax1.tick_params(axis='y', labelcolor=color, labelsize=17)
+    #ax1.legend() 
     
-    color = 'tab:blue'
+    color = 'blue'
     ax2 = ax1.twinx()
+
     ax2.set_ylabel('Price of Anarchy', color=color, fontsize=21)
     if log == True:
-        ax2.semilogx(x_vals, sc_vals, color=color, linewidth=4)
+        ax2.semilogx(x_vals, sc_vals, color=color, linewidth=4, label="PPoA")
         ax2.fill_between(x_vals, sc_vals-sc_vars, sc_vals+sc_vars, color=color, alpha=0.25)
     else:
-        ax2.plot(x_vals, sc_vals, color=color, linewidth=4)
+        ax2.plot(x_vals, sc_vals, color=color, linewidth=4, label="PPoA")
         ax2.fill_between(x_vals, sc_vals-sc_vars, sc_vals+sc_vars, color=color, alpha=0.25)
     
     if sc_l1_vals is not None:
         if log == True:
-            ax2.semilogx(x_vals, sc_l1_vals, color=color, linestyle=":", linewidth=4)
+            ax2.semilogx(x_vals, sc_l1_vals, color=color, linestyle=(0, (1,1)), linewidth=4, label="PPoA (LAD Regression)")
         else:
-            ax2.plot(x_vals, sc_l1_vals, color=color, linestyle=':', linewidth=4)
+            ax2.plot(x_vals, sc_l1_vals, color=color, linestyle=(0,(1,1)), linewidth=4, label="PPoA (LAD regression)")
     
     ax2.tick_params(axis='y', labelcolor=color, labelsize=17)
     plt.grid(False)
-    
+    #ax2.legend() 
     plt.tight_layout()
     plt.savefig(name)
-    #plt.show()
+    plt.show()
 
 def plot_over_p(x_vals, xlabel, name, sc_vals, sc_vars, sc_l1_vals=None, sc_l1_vars=None, log=False):
     """ Plot the best response, iterations, social cost of equilibrium regression
